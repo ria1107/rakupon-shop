@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ご注文フォーム | らくぽん</title>
+<meta name="robots" content="noindex">
+
+<!-- ============================================================
+     Google Analytics 4 (GA4) 計測タグ(トップページ・お礼ページと同じもの)
+     TODO: GA4プロパティ作成後、下記2箇所の G-49DW82TN3H を
+           実際の測定IDに差し替える。
+     ============================================================ -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-49DW82TN3H"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-49DW82TN3H');
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600;700&amp;family=Noto+Sans+JP:wght@400;500;700&amp;family=Zen+Maru+Gothic:wght@500;700;900&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container header-inner">
+    <a href="index.html" class="logo">らくぽん <span class="logo-sub">by F3</span></a>
+    <nav class="site-nav">
+      <a href="index.html#products">商品</a>
+      <a href="index.html#howto">使い方</a>
+      <a href="index.html#faq">よくある質問</a>
+    </nav>
+  </div>
+</header>
+
+<main class="simple-page order-page">
+  <div class="container">
+
+    <span class="section-eyebrow">ORDER</span>
+    <h1>ご注文フォーム</h1>
+    <p>
+      カラーと本数をお選びのうえ、スタンプに刻印する内容(お名前・電話番号・郵便番号・住所)をご入力ください。
+      入力後、クレジットカード決済ページ(Square)にお進みいただきます。
+    </p>
+
+    <form id="orderForm" class="order-form" novalidate>
+
+      <!-- ============================================================
+           ① カラー選択
+           ============================================================ -->
+      <section class="order-section" id="colorSection">
+        <h2>1. カラーを選ぶ</h2>
+        <div class="order-color-grid">
+          <label class="order-color-card" data-color="sexypink">
+            <input type="radio" name="color" value="sexypink" required>
+            <img src="images/product_sexypink.png" alt="らくぽん sexypink(ワインレッドの住所スタンプ)">
+            <span class="order-color-name">らくぽん sexypink</span>
+            <span class="order-color-price">&yen;4,500(税込)</span>
+          </label>
+          <label class="order-color-card" data-color="mojitogreen">
+            <input type="radio" name="color" value="mojitogreen" required>
+            <img src="images/product_mojitogreen.png" alt="らくぽん mojito green(深いグリーンの住所スタンプ)">
+            <span class="order-color-name">らくぽん mojito green</span>
+            <span class="order-color-price">&yen;4,500(税込)</span>
+          </label>
+        </div>
+      </section>
+
+      <!-- ============================================================
+           ② 本数
+           ============================================================ -->
+      <section class="order-section" id="qtySection">
+        <h2>2. 本数を選ぶ</h2>
+        <div class="form-group">
+          <label>ご注文本数 <span class="required-badge">必須</span></label>
+          <input type="number" id="quantity" name="quantity" min="1" step="1" value="1" required>
+        </div>
+        <p class="section-note">本数を変更すると、下の「印字内容」の入力欄が自動で増減します。</p>
+      </section>
+
+      <!-- ============================================================
+           ③ 印字内容(本数ぶんだけJavaScriptで動的に増減する)
+           ============================================================ -->
+      <section class="order-section" id="stampSection">
+        <h2>3. 印字内容</h2>
+        <p class="section-note">スタンプ1本ごとに、刻印するお名前・電話番号・郵便番号・住所をご入力ください。</p>
+        <div id="stampBlocks"><!-- ここにJavaScriptが1本目・2本目...の入力欄を生成します --></div>
+      </section>
+
+      <!-- ============================================================
+           ④ 配送先
+           ============================================================ -->
+      <section class="order-section" id="shipSection">
+        <h2>4. 配送先</h2>
+        <label class="checkbox-row">
+          <input type="checkbox" id="sameAsFirst" checked>
+          配送先は1本目の印字内容と同じ
+        </label>
+        <p class="ship-hint">チェックを外すと、お届け先を別に指定できます。</p>
+
+        <div id="shipFields" style="display:none;">
+          <div class="form-group">
+            <label>お届け先氏名 <span class="required-badge">必須</span></label>
+            <input type="text" id="ship_name" name="ship_name" placeholder="例:山田 太郎">
+          </div>
+          <div class="form-group">
+            <label>電話番号 <span class="required-badge">必須</span></label>
+            <input type="tel" id="ship_tel" name="ship_tel" placeholder="090-0000-0000">
+          </div>
+          <div class="form-group">
+            <label>郵便番号 <span class="required-badge">必須</span></label>
+            <div class="zip-row">
+              <input type="text" id="ship_zip" name="ship_zip" class="zip-input" placeholder="123-4567">
+              <button type="button" class="zip-btn" data-zip-target="ship_zip" data-address-target="ship_address">住所を検索</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>住所 <span class="required-badge">必須</span></label>
+            <input type="text" id="ship_address" name="ship_address" placeholder="例:東京都千代田区〇〇1-2-3 〇〇ビル4F">
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================
+           合計金額 + 送信
+           ============================================================ -->
+      <div class="price-summary">
+        <div class="price-row">
+          <span>本体(<span id="unitPriceLabel">&yen;4,500</span> &times; <span id="qtyLabel">1</span>本)</span>
+          <span id="subtotalDisplay">&yen;4,500</span>
+        </div>
+        <div class="price-row">
+          <span>送料(全国一律)</span>
+          <span>&yen;500</span>
+        </div>
+        <div class="price-row total">
+          <span>合計</span>
+          <span id="totalDisplay">&yen;5,000</span>
+        </div>
+      </div>
+
+      <div id="orderError" class="order-error" role="alert"></div>
+
+      <button type="submit" id="submitBtn" class="btn btn-primary order-submit-btn">この内容で決済に進む</button>
+      <p class="section-note" style="text-align:center; margin-top:12px;">
+        「決済に進む」を押すと、クレジットカード決済ページ(Square)に移動します。
+      </p>
+    </form>
+
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="container footer-inner">
+    <div class="footer-brand">らくぽん</div>
+    <nav class="footer-links">
+      <a href="tokushoho.html">特定商取引法に基づく表記</a>
+      <a href="privacy.html">プライバシーポリシー</a>
+    </nav>
+    <p class="footer-copy">&copy; 2026 F3株式会社 All Rights Reserved.</p>
+  </div>
+</footer>
+
+<script>
+  /* ==========================================================================
+     らくぽん 注文フォーム(order.html)
+     ----------------------------------------------------------------------
+     【非エンジニアの方向けメモ】
+     ・下の API_URL は、GAS(GAS_注文フォームAPI)を新規プロジェクトとして
+       デプロイした後に発行される「ウェブアプリのURL」に差し替える必要があります。
+       まだデプロイしていないため、現時点ではダミーの値になっています。
+     ・PRICES(表示価格)を変更する場合は、GAS側(GAS_注文フォームAPI/Code.js)の
+       PRODUCTS定数の金額も必ず合わせて変更してください(表示価格と実際の
+       請求額がズレてしまうため)。
+     ========================================================================== */
+
+  // TODO: GAS_注文フォームAPI を新規デプロイ後、実際のウェブアプリURLに差し替える
+  var API_URL = 'https://script.google.com/macros/s/REPLACE_WITH_DEPLOYED_WEBAPP_URL/exec';
+
+  // 表示用の価格定数(実際の請求額はGAS側Code.jsのPRODUCTS定数で確定する)
+  var PRICES = { sexypink: 4500, mojitogreen: 4500 };
+  var SHIPPING_FEE = 500;
+  // 入力欄の増えすぎ(誤入力・貼り付け等)を防ぐための本数の上限
+  var MAX_QUANTITY = 30;
+
+  // --------------------------------------------------------------------
+  // 本数ぶんだけ「印字内容」の入力欄セットを生成/削除する
+  // --------------------------------------------------------------------
+  function generateStampBlocks(qty) {
+    var container = document.getElementById('stampBlocks');
+    var current = container.querySelectorAll('.stamp-block').length;
+
+    if (qty > current) {
+      for (var i = current + 1; i <= qty; i++) {
+        var block = document.createElement('div');
+        block.className = 'stamp-block';
+        block.id = 'stampBlock' + i;
+        block.innerHTML =
+          '<h3 class="stamp-block-title">' + i + '本目の印字内容</h3>' +
+          '<div class="form-group">' +
+            '<label>お名前 <span class="required-badge">必須</span></label>' +
+            '<input type="text" name="stamp' + i + '_name" id="stamp' + i + '_name" placeholder="例:山田 太郎" required>' +
+          '</div>' +
+          '<div class="form-group">' +
+            '<label>電話番号 <span class="required-badge">必須</span></label>' +
+            '<input type="tel" name="stamp' + i + '_tel" id="stamp' + i + '_tel" placeholder="090-0000-0000" required>' +
+          '</div>' +
+          '<div class="form-group">' +
+            '<label>郵便番号 <span class="required-badge">必須</span></label>' +
+            '<div class="zip-row">' +
+              '<input type="text" name="stamp' + i + '_zip" id="stamp' + i + '_zip" class="zip-input" placeholder="123-4567" required>' +
+              '<button type="button" class="zip-btn" data-zip-target="stamp' + i + '_zip" data-address-target="stamp' + i + '_address">住所を検索</button>' +
+            '</div>' +
+          '</div>' +
+          '<div class="form-group">' +
+            '<label>住所 <span class="required-badge">必須</span></label>' +
+            '<input type="text" name="stamp' + i + '_address" id="stamp' + i + '_address" placeholder="例:東京都千代田区〇〇1-2-3 〇〇ビル4F" required>' +
+          '</div>';
+        container.appendChild(block);
+      }
+    } else {
+      while (container.children.length > qty) {
+        container.removeChild(container.lastChild);
+      }
+    }
+  }
+
+  // --------------------------------------------------------------------
+  // 郵便番号 → 住所自動検索(zipcloud API。既存フォーム群と同じ実装)
+  // --------------------------------------------------------------------
+  function handleZipSearch(zipId, addressId) {
+    var zipInput = document.getElementById(zipId);
+    var zip = (zipInput.value || '').replace(/[^0-9]/g, '');
+    if (zip.length !== 7) {
+      alert('郵便番号を7桁の数字で入力してください。');
+      return;
+    }
+    fetch('https://zipcloud.ibsnet.co.jp/api/search?zipcode=' + zip)
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        if (data.results && data.results[0]) {
+          var r = data.results[0];
+          document.getElementById(addressId).value = r.address1 + r.address2 + r.address3;
+          document.getElementById(addressId).focus();
+        } else {
+          alert('該当する住所が見つかりませんでした。');
+        }
+      })
+      .catch(function () {
+        alert('通信エラーが発生しました。');
+      });
+  }
+
+  // --------------------------------------------------------------------
+  // 配送先「1本目と同じ」チェックボックスの表示切替
+  // --------------------------------------------------------------------
+  function toggleShipFields() {
+    var same = document.getElementById('sameAsFirst').checked;
+    document.getElementById('shipFields').style.display = same ? 'none' : 'block';
+    ['ship_name', 'ship_tel', 'ship_zip', 'ship_address'].forEach(function (id) {
+      document.getElementById(id).required = !same;
+    });
+  }
+
+  // --------------------------------------------------------------------
+  // 合計金額のリアルタイム表示
+  // --------------------------------------------------------------------
+  function updatePrice() {
+    var colorInput = document.querySelector('input[name="color"]:checked');
+    var unit = colorInput ? (PRICES[colorInput.value] || 0) : 0;
+    var qtyInput = document.getElementById('quantity');
+    var qty = parseInt(qtyInput.value, 10);
+    if (!qty || qty < 1) qty = 1;
+    var displayUnit = unit || 4500; // まだカラー未選択の間は代表価格(4,500円)を表示
+    var subtotal = displayUnit * qty;
+    var total = subtotal + SHIPPING_FEE;
+
+    document.getElementById('unitPriceLabel').textContent = '¥' + displayUnit.toLocaleString();
+    document.getElementById('qtyLabel').textContent = qty;
+    document.getElementById('subtotalDisplay').textContent = '¥' + subtotal.toLocaleString();
+    document.getElementById('totalDisplay').textContent = '¥' + total.toLocaleString();
+  }
+
+  // --------------------------------------------------------------------
+  // カラーカードの選択ハイライト
+  // --------------------------------------------------------------------
+  function highlightSelectedColor() {
+    document.querySelectorAll('.order-color-card').forEach(function (card) {
+      var input = card.querySelector('input[type="radio"]');
+      card.classList.toggle('is-selected', !!(input && input.checked));
+    });
+  }
+
+  // --------------------------------------------------------------------
+  // エラー表示・送信中の状態切替
+  // --------------------------------------------------------------------
+  function showError(message) {
+    var box = document.getElementById('orderError');
+    box.textContent = message;
+    box.classList.add('is-visible');
+  }
+  function hideError() {
+    var box = document.getElementById('orderError');
+    box.textContent = '';
+    box.classList.remove('is-visible');
+  }
+  function setSubmitting(isSubmitting) {
+    var btn = document.getElementById('submitBtn');
+    btn.disabled = isSubmitting;
+    btn.textContent = isSubmitting ? '送信中…' : 'この内容で決済に進む';
+  }
+
+  // --------------------------------------------------------------------
+  // 送信処理: 入力内容をJSON化してGASのAPIに送り、決済ページへリダイレクト
+  // --------------------------------------------------------------------
+  function handleSubmit(evt) {
+    evt.preventDefault();
+    hideError();
+
+    var form = document.getElementById('orderForm');
+    if (!form.reportValidity()) return;
+
+    var colorInput = document.querySelector('input[name="color"]:checked');
+    var color = colorInput ? colorInput.value : '';
+    var qty = parseInt(document.getElementById('quantity').value, 10) || 1;
+
+    var stamps = [];
+    for (var i = 1; i <= qty; i++) {
+      stamps.push({
+        name: document.getElementById('stamp' + i + '_name').value.trim(),
+        tel: document.getElementById('stamp' + i + '_tel').value.trim(),
+        zip: document.getElementById('stamp' + i + '_zip').value.trim(),
+        address: document.getElementById('stamp' + i + '_address').value.trim()
+      });
+    }
+
+    var sameAsFirst = document.getElementById('sameAsFirst').checked;
+    var shipping = null;
+    if (!sameAsFirst) {
+      shipping = {
+        name: document.getElementById('ship_name').value.trim(),
+        tel: document.getElementById('ship_tel').value.trim(),
+        zip: document.getElementById('ship_zip').value.trim(),
+        address: document.getElementById('ship_address').value.trim()
+      };
+    }
+
+    var payload = {
+      color: color,
+      quantity: qty,
+      stamps: stamps,
+      sameAsFirst: sameAsFirst,
+      shipping: shipping
+    };
+
+    setSubmitting(true);
+
+    // Content-Type: text/plain で送ることでプリフライト(OPTIONS)を発生させない
+    // (既存の注文フォーム群と同じ実装パターン)
+    fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    })
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        if (data.success && data.paymentUrl) {
+          window.location.href = data.paymentUrl;
+        } else {
+          showError(data.message || 'エラーが発生しました。時間をおいて再度お試しください。');
+          setSubmitting(false);
+        }
+      })
+      .catch(function () {
+        showError('通信エラーが発生しました。通信環境をご確認のうえ、再度お試しください。');
+        setSubmitting(false);
+      });
+  }
+
+  // --------------------------------------------------------------------
+  // 初期化
+  // --------------------------------------------------------------------
+  document.addEventListener('DOMContentLoaded', function () {
+    generateStampBlocks(1);
+    toggleShipFields();
+    updatePrice();
+
+    // URLに ?color=sexypink / ?color=mojitogreen があれば、あらかじめ選択状態にする
+    var params = new URLSearchParams(window.location.search);
+    var presetColor = params.get('color');
+    if (presetColor === 'sexypink' || presetColor === 'mojitogreen') {
+      var radio = document.querySelector('input[name="color"][value="' + presetColor + '"]');
+      if (radio) {
+        radio.checked = true;
+        highlightSelectedColor();
+        updatePrice();
+      }
+    }
+
+    // 本数の変更 → 印字内容の入力欄を増減 + 合計金額を再計算
+    document.getElementById('quantity').addEventListener('input', function () {
+      var v = parseInt(this.value, 10);
+      if (!v || v < 1) v = 1;
+      if (v > MAX_QUANTITY) v = MAX_QUANTITY;
+      generateStampBlocks(v);
+      updatePrice();
+    });
+    document.getElementById('quantity').addEventListener('change', function () {
+      var v = parseInt(this.value, 10);
+      if (!v || v < 1) v = 1;
+      if (v > MAX_QUANTITY) v = MAX_QUANTITY;
+      this.value = v;
+      generateStampBlocks(v);
+      updatePrice();
+    });
+
+    // カラー選択の変更
+    document.querySelectorAll('input[name="color"]').forEach(function (radio) {
+      radio.addEventListener('change', function () {
+        highlightSelectedColor();
+        updatePrice();
+      });
+    });
+
+    // 配送先「1本目と同じ」チェックボックス
+    document.getElementById('sameAsFirst').addEventListener('change', toggleShipFields);
+
+    // 郵便番号検索ボタン(動的に増える1本目以降の分もまとめて拾うイベント委任)
+    document.addEventListener('click', function (e) {
+      var btn = e.target.closest('.zip-btn');
+      if (!btn) return;
+      handleZipSearch(btn.getAttribute('data-zip-target'), btn.getAttribute('data-address-target'));
+    });
+
+    // 送信
+    document.getElementById('orderForm').addEventListener('submit', handleSubmit);
+  });
+</script>
+
+</body>
+</html>
