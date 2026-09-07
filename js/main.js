@@ -74,8 +74,36 @@
     });
   }
 
+  /* --------------------------------------------------------------------
+     ③ ヘッダーのカートバッジ表示(order.htmlに追加した商品の点数を表示)
+        カートの中身自体はlocalStorage(キー: rakuponCart)にorder.html側が
+        書き込む。このバッジはそれを読んで件数を表示するだけ。
+     -------------------------------------------------------------------- */
+  function updateCartNavBadge() {
+    var link = document.getElementById("cartNavLink");
+    var countEl = document.getElementById("cartNavCount");
+    if (!link || !countEl) return;
+    var count = 0;
+    try {
+      var raw = window.localStorage.getItem("rakuponCart");
+      var cart = raw ? JSON.parse(raw) : [];
+      if (Array.isArray(cart)) {
+        count = cart.reduce(function (sum, item) { return sum + (item.quantity || 0); }, 0);
+      }
+    } catch (e) {
+      count = 0;
+    }
+    if (count > 0) {
+      countEl.textContent = count;
+      link.style.display = "inline-block";
+    } else {
+      link.style.display = "none";
+    }
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
     applySoldOutState();
     bindBuyButtons();
+    updateCartNavBadge();
   });
 })();

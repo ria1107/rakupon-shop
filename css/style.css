@@ -847,6 +847,114 @@ section {
   box-shadow: 0 0 0 2px rgba(184, 146, 90, 0.25);
 }
 
+/* 選択済み商品(order.html。カラー選択の代わりに、選ばれた商品だけを表示する) */
+.order-selected-product {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border: 2px solid var(--color-gold);
+  border-radius: 4px;
+  background: var(--color-fairway-soft);
+}
+
+.order-selected-product img {
+  width: 88px;
+  height: 88px;
+  object-fit: cover;
+  border-radius: 2px;
+  flex: 0 0 auto;
+}
+
+.order-selected-product-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* カートの中身 */
+.cart-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cart-line {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--color-border);
+  font-size: var(--fs-16);
+}
+
+.cart-line:last-child {
+  border-bottom: none;
+}
+
+.cart-line-name {
+  flex: 1;
+  color: var(--color-fairway-dark);
+}
+
+.cart-line-price {
+  color: var(--color-text-muted);
+  font-size: var(--fs-12);
+}
+
+.cart-line-remove {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: var(--fs-12);
+  padding: 4px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.cart-line-remove:hover {
+  border-color: #a34a2f;
+  color: #a34a2f;
+}
+
+/* ヘッダーのカートバッジ(order.html) */
+.cart-nav-link {
+  background: var(--color-gold);
+  color: var(--color-fairway-dark) !important;
+  padding: 6px 14px !important;
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+/* 注文フォームのボタン行(カートに追加 / 決済に進む) */
+.order-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@media (min-width: 641px) {
+  .order-actions {
+    flex-direction: row;
+  }
+
+  .order-addcart-btn,
+  .order-submit-btn {
+    flex: 1;
+  }
+}
+
+.order-empty-state {
+  text-align: center;
+  padding: 48px 0;
+}
+
+.order-empty-state p {
+  color: var(--color-text-muted);
+  margin-bottom: 20px;
+}
+
 /* フォーム部品共通 */
 .form-group {
   margin-bottom: 16px;

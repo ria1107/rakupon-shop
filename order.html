@@ -33,6 +33,7 @@
       <a href="index.html#products">商品</a>
       <a href="index.html#howto">使い方</a>
       <a href="index.html#faq">よくある質問</a>
+      <a href="order.html" id="cartNavLink" class="cart-nav-link" style="display:none;">🛒 カート(<span id="cartNavCount">0</span>)</a>
     </nav>
   </div>
 </header>
@@ -42,32 +43,36 @@
 
     <span class="section-eyebrow">ORDER</span>
     <h1>ご注文フォーム</h1>
-    <p>
-      カラーと本数をお選びのうえ、スタンプに刻印する内容(お名前・電話番号・郵便番号・住所)をご入力ください。
+    <p id="orderIntro">
+      刻印する内容(お名前・電話番号・郵便番号・住所)をご入力ください。
       入力後、クレジットカード決済ページ(Square)にお進みいただきます。
     </p>
+
+    <!-- ============================================================
+         カートの中身(2点目以降を追加したときだけ表示)
+         ============================================================ -->
+    <section class="order-section" id="cartSection" style="display:none;">
+      <h2>カートの中身</h2>
+      <div id="cartList" class="cart-list"></div>
+      <p class="section-note">続けて他の商品を追加する場合は<a href="index.html#products">商品一覧</a>からお選びください。</p>
+    </section>
 
     <form id="orderForm" class="order-form" novalidate>
 
       <!-- ============================================================
-           ① カラー選択
+           ① 選択中の商品(index.htmlの「購入する」から選ばれた商品を表示するだけ。
+              カラー選択のやり直しはできない。商品を変える場合は商品一覧に戻る)
            ============================================================ -->
-      <section class="order-section" id="colorSection">
-        <h2>1. カラーを選ぶ</h2>
-        <div class="order-color-grid">
-          <label class="order-color-card" data-color="sexypink">
-            <input type="radio" name="color" value="sexypink" required>
-            <img src="images/product_sexypink.png" alt="らくぽん sexypink(ワインレッドの住所スタンプ)">
-            <span class="order-color-name">らくぽん sexypink</span>
-            <span class="order-color-price">&yen;4,500(税込)</span>
-          </label>
-          <label class="order-color-card" data-color="mojitogreen">
-            <input type="radio" name="color" value="mojitogreen" required>
-            <img src="images/product_mojitogreen.png" alt="らくぽん mojito green(深いグリーンの住所スタンプ)">
-            <span class="order-color-name">らくぽん mojito green</span>
-            <span class="order-color-price">&yen;4,500(税込)</span>
-          </label>
+      <section class="order-section" id="productSection">
+        <h2 id="productSectionTitle">1. ご購入商品</h2>
+        <div class="order-selected-product" id="selectedProductCard">
+          <img id="selectedProductImg" src="" alt="">
+          <div class="order-selected-product-body">
+            <span class="order-color-name" id="selectedProductName"></span>
+            <span class="order-color-price" id="selectedProductPrice"></span>
+          </div>
         </div>
+        <p class="section-note"><a href="index.html#products">他の商品を選び直す</a></p>
       </section>
 
       <!-- ============================================================
@@ -79,11 +84,12 @@
           <label>ご注文本数 <span class="required-badge">必須</span></label>
           <input type="number" id="quantity" name="quantity" min="1" step="1" value="1" required>
         </div>
-        <p class="section-note">本数を変更すると、下の「印字内容」の入力欄が自動で増減します。</p>
+        <p class="section-note" id="qtyNote">本数を変更すると、下の「印字内容」の入力欄が自動で増減します。</p>
       </section>
 
       <!-- ============================================================
-           ③ 印字内容(本数ぶんだけJavaScriptで動的に増減する)
+           ③ 印字内容(本数ぶんだけJavaScriptで動的に増減する。
+              エングレービング不要の商品(補充インク等)ではこのセクション自体を非表示にする)
            ============================================================ -->
       <section class="order-section" id="stampSection">
         <h2>3. 印字内容</h2>
@@ -92,11 +98,11 @@
       </section>
 
       <!-- ============================================================
-           ④ 配送先
+           ④ 配送先(カート全体で1回だけ入力する)
            ============================================================ -->
       <section class="order-section" id="shipSection">
         <h2>4. 配送先</h2>
-        <label class="checkbox-row">
+        <label class="checkbox-row" id="sameAsFirstRow">
           <input type="checkbox" id="sameAsFirst" checked>
           配送先は1本目の印字内容と同じ
         </label>
@@ -129,27 +135,82 @@
            合計金額 + 送信
            ============================================================ -->
       <div class="price-summary">
+        <div id="priceLines"></div>
         <div class="price-row">
-          <span>本体(<span id="unitPriceLabel">&yen;4,500</span> &times; <span id="qtyLabel">1</span>本)</span>
-          <span id="subtotalDisplay">&yen;4,500</span>
-        </div>
-        <div class="price-row">
-          <span>送料(全国一律)</span>
+          <span>送料(全国一律・ご注文全体で1回)</span>
           <span>&yen;500</span>
         </div>
         <div class="price-row total">
           <span>合計</span>
-          <span id="totalDisplay">&yen;5,000</span>
+          <span id="totalDisplay">&yen;0</span>
         </div>
       </div>
 
       <div id="orderError" class="order-error" role="alert"></div>
 
-      <button type="submit" id="submitBtn" class="btn btn-primary order-submit-btn">この内容で決済に進む</button>
+      <div class="order-actions">
+        <button type="button" id="addToCartBtn" class="btn btn-outline order-addcart-btn">カートに追加して他の色も選ぶ</button>
+        <button type="submit" id="submitBtn" class="btn btn-primary order-submit-btn">この内容で決済に進む</button>
+      </div>
       <p class="section-note" style="text-align:center; margin-top:12px;">
         「決済に進む」を押すと、クレジットカード決済ページ(Square)に移動します。
       </p>
     </form>
+
+    <!-- カートのみ表示するとき(商品一覧からカート経由で来たとき)の決済ボタン -->
+    <div id="cartOnlyActions" style="display:none;">
+      <section class="order-section" id="cartOnlyShipSection">
+        <h2>配送先</h2>
+        <label class="checkbox-row" id="cartOnlySameAsFirstRow">
+          <input type="checkbox" id="cartOnlySameAsFirst" checked>
+          配送先は1本目の印字内容と同じ
+        </label>
+        <p class="ship-hint">チェックを外すと、お届け先を別に指定できます。</p>
+        <div id="cartOnlyShipFields" style="display:none;">
+          <div class="form-group">
+            <label>お届け先氏名 <span class="required-badge">必須</span></label>
+            <input type="text" id="cartOnly_ship_name" placeholder="例:山田 太郎">
+          </div>
+          <div class="form-group">
+            <label>電話番号 <span class="required-badge">必須</span></label>
+            <input type="tel" id="cartOnly_ship_tel" placeholder="090-0000-0000">
+          </div>
+          <div class="form-group">
+            <label>郵便番号 <span class="required-badge">必須</span></label>
+            <div class="zip-row">
+              <input type="text" id="cartOnly_ship_zip" class="zip-input" placeholder="123-4567">
+              <button type="button" class="zip-btn" data-zip-target="cartOnly_ship_zip" data-address-target="cartOnly_ship_address">住所を検索</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>住所 <span class="required-badge">必須</span></label>
+            <input type="text" id="cartOnly_ship_address" placeholder="例:東京都千代田区〇〇1-2-3 〇〇ビル4F">
+          </div>
+        </div>
+      </section>
+
+      <div class="price-summary">
+        <div id="cartOnlyPriceLines"></div>
+        <div class="price-row">
+          <span>送料(全国一律・ご注文全体で1回)</span>
+          <span>&yen;500</span>
+        </div>
+        <div class="price-row total">
+          <span>合計</span>
+          <span id="cartOnlyTotalDisplay">&yen;0</span>
+        </div>
+      </div>
+
+      <div id="cartOnlyError" class="order-error" role="alert"></div>
+
+      <button type="button" id="cartOnlySubmitBtn" class="btn btn-primary order-submit-btn">この内容で決済に進む</button>
+    </div>
+
+    <!-- 商品未選択・カートも空のときの案内 -->
+    <div id="emptyState" style="display:none;" class="order-empty-state">
+      <p>ご購入いただく商品が選択されていません。まずは商品一覧からお選びください。</p>
+      <a href="index.html#products" class="btn btn-primary">商品一覧を見る</a>
+    </div>
 
   </div>
 </main>
@@ -172,20 +233,70 @@
      【非エンジニアの方向けメモ】
      ・下の API_URL は、GAS(GAS_注文フォームAPI)を新規プロジェクトとして
        デプロイした後に発行される「ウェブアプリのURL」に差し替える必要があります。
-       まだデプロイしていないため、現時点ではダミーの値になっています。
-     ・PRICES(表示価格)を変更する場合は、GAS側(GAS_注文フォームAPI/Code.js)の
+     ・PRODUCTS(表示価格)を変更する場合は、GAS側(GAS_注文フォームAPI/Code.js)の
        PRODUCTS定数の金額も必ず合わせて変更してください(表示価格と実際の
        請求額がズレてしまうため)。
+     ・2026-09-07変更: 「商品を選んでから入力フォームへ直行」「補充インクも
+       同じ注文フォーム経由で購入可能」「複数商品(色)をカートにまとめて
+       1回の決済で購入可能」に対応。カートはブラウザのlocalStorageに保存する
+       (この端末・このブラウザだけで有効。サーバーには保存しない)。
      ========================================================================== */
 
   // TODO: GAS_注文フォームAPI を新規デプロイ後、実際のウェブアプリURLに差し替える
   var API_URL = 'https://script.google.com/macros/s/AKfycbyJOaaZ05zl-nuqpDLuLeP2HGxWhh4fHU3eqZiArR_Cb_5x1kRExohh1O-uxdV04uMx/exec';
 
-  // 表示用の価格定数(実際の請求額はGAS側Code.jsのPRODUCTS定数で確定する)
-  var PRICES = { sexypink: 4500, mojitogreen: 4500 };
+  // 商品定義(実際の請求額はGAS側Code.jsのPRODUCTS定数で確定する)
+  // engraved: true の商品だけ「印字内容(お名前・電話番号・郵便番号・住所)」の入力欄が必要
+  var PRODUCTS = {
+    sexypink:    { name: 'らくぽん sexypink',    price: 4500, engraved: true,  image: 'images/product_sexypink.png' },
+    mojitogreen: { name: 'らくぽん mojito green', price: 4500, engraved: true,  image: 'images/product_mojitogreen.png' },
+    ink:         { name: '専用補充インク',        price: 385,  engraved: false, image: 'images/product_ink.png' }
+  };
   var SHIPPING_FEE = 500;
-  // 入力欄の増えすぎ(誤入力・貼り付け等)を防ぐための本数の上限
   var MAX_QUANTITY = 30;
+  var CART_KEY = 'rakuponCart';
+
+  // --------------------------------------------------------------------
+  // カートの読み書き(localStorage)
+  // --------------------------------------------------------------------
+  function loadCart() {
+    try {
+      var raw = window.localStorage.getItem(CART_KEY);
+      var cart = raw ? JSON.parse(raw) : [];
+      return Array.isArray(cart) ? cart : [];
+    } catch (e) {
+      return [];
+    }
+  }
+  function saveCart(cart) {
+    try {
+      window.localStorage.setItem(CART_KEY, JSON.stringify(cart));
+    } catch (e) {
+      // localStorageが使えない環境(プライベートブラウズ等)では無視する
+    }
+  }
+  function clearCart() {
+    try { window.localStorage.removeItem(CART_KEY); } catch (e) {}
+  }
+  function cartItemCount(cart) {
+    return cart.reduce(function (sum, item) { return sum + (item.quantity || 0); }, 0);
+  }
+
+  // --------------------------------------------------------------------
+  // ヘッダーのカートバッジ更新(全ページ共通の考え方だが、このファイルではorder.htmlのみ)
+  // --------------------------------------------------------------------
+  function updateCartNav() {
+    var cart = loadCart();
+    var link = document.getElementById('cartNavLink');
+    var countEl = document.getElementById('cartNavCount');
+    var count = cartItemCount(cart);
+    if (count > 0) {
+      countEl.textContent = count;
+      link.style.display = 'inline-block';
+    } else {
+      link.style.display = 'none';
+    }
+  }
 
   // --------------------------------------------------------------------
   // 本数ぶんだけ「印字内容」の入力欄セットを生成/削除する
@@ -256,108 +367,123 @@
   }
 
   // --------------------------------------------------------------------
-  // 配送先「1本目と同じ」チェックボックスの表示切替
+  // 現在のフォーム入力から、カート1件ぶんのオブジェクトを作る(未検証)
   // --------------------------------------------------------------------
-  function toggleShipFields() {
-    var same = document.getElementById('sameAsFirst').checked;
-    document.getElementById('shipFields').style.display = same ? 'none' : 'block';
-    ['ship_name', 'ship_tel', 'ship_zip', 'ship_address'].forEach(function (id) {
-      document.getElementById(id).required = !same;
-    });
+  function readCurrentFormItem(productKey) {
+    var product = PRODUCTS[productKey];
+    var qty = parseInt(document.getElementById('quantity').value, 10) || 1;
+    var stamps = [];
+    if (product.engraved) {
+      for (var i = 1; i <= qty; i++) {
+        stamps.push({
+          name: (document.getElementById('stamp' + i + '_name') || {}).value || '',
+          tel: (document.getElementById('stamp' + i + '_tel') || {}).value || '',
+          zip: (document.getElementById('stamp' + i + '_zip') || {}).value || '',
+          address: (document.getElementById('stamp' + i + '_address') || {}).value || ''
+        });
+      }
+    }
+    return { product: productKey, quantity: qty, stamps: stamps };
+  }
+
+  // 現在のフォーム(商品セクションが表示されている場合)の入力チェック
+  function validateCurrentForm(productKey) {
+    var product = PRODUCTS[productKey];
+    var qty = parseInt(document.getElementById('quantity').value, 10);
+    if (!qty || qty < 1) {
+      return '本数を正しく入力してください。';
+    }
+    if (product.engraved) {
+      for (var i = 1; i <= qty; i++) {
+        var name = (document.getElementById('stamp' + i + '_name') || {}).value || '';
+        var tel = (document.getElementById('stamp' + i + '_tel') || {}).value || '';
+        var zip = (document.getElementById('stamp' + i + '_zip') || {}).value || '';
+        var address = (document.getElementById('stamp' + i + '_address') || {}).value || '';
+        if (!name.trim() || !tel.trim() || !zip.trim() || !address.trim()) {
+          return (i + '本目の印字内容に未入力の項目があります。');
+        }
+      }
+    }
+    return null;
   }
 
   // --------------------------------------------------------------------
-  // 合計金額のリアルタイム表示
+  // カート内容の一覧表示(削除リンクつき)
   // --------------------------------------------------------------------
-  function updatePrice() {
-    var colorInput = document.querySelector('input[name="color"]:checked');
-    var unit = colorInput ? (PRICES[colorInput.value] || 0) : 0;
-    var qtyInput = document.getElementById('quantity');
-    var qty = parseInt(qtyInput.value, 10);
-    if (!qty || qty < 1) qty = 1;
-    var displayUnit = unit || 4500; // まだカラー未選択の間は代表価格(4,500円)を表示
-    var subtotal = displayUnit * qty;
-    var total = subtotal + SHIPPING_FEE;
-
-    document.getElementById('unitPriceLabel').textContent = '¥' + displayUnit.toLocaleString();
-    document.getElementById('qtyLabel').textContent = qty;
-    document.getElementById('subtotalDisplay').textContent = '¥' + subtotal.toLocaleString();
-    document.getElementById('totalDisplay').textContent = '¥' + total.toLocaleString();
+  function renderCartList(containerId, cart) {
+    var container = document.getElementById(containerId);
+    if (!cart.length) {
+      container.innerHTML = '';
+      return;
+    }
+    container.innerHTML = cart.map(function (item, index) {
+      var product = PRODUCTS[item.product];
+      var name = product ? product.name : item.product;
+      var price = product ? product.price : 0;
+      var subtotal = price * item.quantity;
+      return '<div class="cart-line">' +
+        '<span class="cart-line-name">' + name + ' &times; ' + item.quantity + '本</span>' +
+        '<span class="cart-line-price">&yen;' + subtotal.toLocaleString() + '</span>' +
+        '<button type="button" class="cart-line-remove" data-cart-index="' + index + '" data-cart-list="' + containerId + '">削除</button>' +
+        '</div>';
+    }).join('');
   }
 
-  // --------------------------------------------------------------------
-  // カラーカードの選択ハイライト
-  // --------------------------------------------------------------------
-  function highlightSelectedColor() {
-    document.querySelectorAll('.order-color-card').forEach(function (card) {
-      var input = card.querySelector('input[type="radio"]');
-      card.classList.toggle('is-selected', !!(input && input.checked));
+  // 現在のカート+(あれば)フォーム入力中の商品をあわせた合計金額の内訳行を作る
+  function renderPriceLines(containerId, totalId, cart, currentItem) {
+    var lines = cart.map(function (item) {
+      var product = PRODUCTS[item.product];
+      var price = product ? product.price : 0;
+      var subtotal = price * item.quantity;
+      return { label: (product ? product.name : item.product) + '(&yen;' + price.toLocaleString() + ' &times; ' + item.quantity + '本)', amount: subtotal };
     });
+    var grandTotal = lines.reduce(function (sum, l) { return sum + l.amount; }, 0);
+
+    if (currentItem) {
+      var cp = PRODUCTS[currentItem.product];
+      var cprice = cp ? cp.price : 0;
+      var csub = cprice * currentItem.quantity;
+      lines.push({ label: (cp ? cp.name : currentItem.product) + '(&yen;' + cprice.toLocaleString() + ' &times; ' + currentItem.quantity + '本)', amount: csub });
+      grandTotal += csub;
+    }
+
+    var linesEl = document.getElementById(containerId);
+    linesEl.innerHTML = lines.map(function (l) {
+      return '<div class="price-row"><span>' + l.label + '</span><span>&yen;' + l.amount.toLocaleString() + '</span></div>';
+    }).join('');
+
+    var total = grandTotal + (lines.length ? SHIPPING_FEE : 0);
+    document.getElementById(totalId).textContent = '¥' + total.toLocaleString();
   }
 
   // --------------------------------------------------------------------
   // エラー表示・送信中の状態切替
   // --------------------------------------------------------------------
-  function showError(message) {
-    var box = document.getElementById('orderError');
+  function showError(boxId, message) {
+    var box = document.getElementById(boxId);
     box.textContent = message;
     box.classList.add('is-visible');
+    box.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
-  function hideError() {
-    var box = document.getElementById('orderError');
+  function hideError(boxId) {
+    var box = document.getElementById(boxId);
     box.textContent = '';
     box.classList.remove('is-visible');
   }
-  function setSubmitting(isSubmitting) {
-    var btn = document.getElementById('submitBtn');
+  function setSubmitting(btnId, isSubmitting, labelWhenIdle) {
+    var btn = document.getElementById(btnId);
     btn.disabled = isSubmitting;
-    btn.textContent = isSubmitting ? '送信中…' : 'この内容で決済に進む';
+    btn.textContent = isSubmitting ? '送信中…' : labelWhenIdle;
   }
 
   // --------------------------------------------------------------------
-  // 送信処理: 入力内容をJSON化してGASのAPIに送り、決済ページへリダイレクト
+  // GASへ送信し、決済ページへリダイレクトする共通処理
   // --------------------------------------------------------------------
-  function handleSubmit(evt) {
-    evt.preventDefault();
-    hideError();
+  function submitOrder(items, sameAsFirst, shipping, btnId, errBoxId, btnLabel) {
+    hideError(errBoxId);
+    var payload = { items: items, sameAsFirst: sameAsFirst, shipping: shipping };
 
-    var form = document.getElementById('orderForm');
-    if (!form.reportValidity()) return;
-
-    var colorInput = document.querySelector('input[name="color"]:checked');
-    var color = colorInput ? colorInput.value : '';
-    var qty = parseInt(document.getElementById('quantity').value, 10) || 1;
-
-    var stamps = [];
-    for (var i = 1; i <= qty; i++) {
-      stamps.push({
-        name: document.getElementById('stamp' + i + '_name').value.trim(),
-        tel: document.getElementById('stamp' + i + '_tel').value.trim(),
-        zip: document.getElementById('stamp' + i + '_zip').value.trim(),
-        address: document.getElementById('stamp' + i + '_address').value.trim()
-      });
-    }
-
-    var sameAsFirst = document.getElementById('sameAsFirst').checked;
-    var shipping = null;
-    if (!sameAsFirst) {
-      shipping = {
-        name: document.getElementById('ship_name').value.trim(),
-        tel: document.getElementById('ship_tel').value.trim(),
-        zip: document.getElementById('ship_zip').value.trim(),
-        address: document.getElementById('ship_address').value.trim()
-      };
-    }
-
-    var payload = {
-      color: color,
-      quantity: qty,
-      stamps: stamps,
-      sameAsFirst: sameAsFirst,
-      shipping: shipping
-    };
-
-    setSubmitting(true);
+    setSubmitting(btnId, true, btnLabel);
 
     // Content-Type: text/plain で送ることでプリフライト(OPTIONS)を発生させない
     // (既存の注文フォーム群と同じ実装パターン)
@@ -369,44 +495,171 @@
       .then(function (res) { return res.json(); })
       .then(function (data) {
         if (data.success && data.paymentUrl) {
+          clearCart();
           window.location.href = data.paymentUrl;
         } else {
-          showError(data.message || 'エラーが発生しました。時間をおいて再度お試しください。');
-          setSubmitting(false);
+          showError(errBoxId, data.message || 'エラーが発生しました。時間をおいて再度お試しください。');
+          setSubmitting(btnId, false, btnLabel);
         }
       })
       .catch(function () {
-        showError('通信エラーが発生しました。通信環境をご確認のうえ、再度お試しください。');
-        setSubmitting(false);
+        showError(errBoxId, '通信エラーが発生しました。通信環境をご確認のうえ、再度お試しください。');
+        setSubmitting(btnId, false, btnLabel);
       });
   }
 
-  // --------------------------------------------------------------------
+  // ========================================================================
   // 初期化
-  // --------------------------------------------------------------------
+  // ========================================================================
   document.addEventListener('DOMContentLoaded', function () {
-    generateStampBlocks(1);
-    toggleShipFields();
-    updatePrice();
+    updateCartNav();
 
-    // URLに ?color=sexypink / ?color=mojitogreen があれば、あらかじめ選択状態にする
     var params = new URLSearchParams(window.location.search);
-    var presetColor = params.get('color');
-    if (presetColor === 'sexypink' || presetColor === 'mojitogreen') {
-      var radio = document.querySelector('input[name="color"][value="' + presetColor + '"]');
-      if (radio) {
-        radio.checked = true;
-        highlightSelectedColor();
-        updatePrice();
+    var productKey = params.get('product') || params.get('color'); // colorは旧パラメータ名の互換
+    var product = (productKey && PRODUCTS[productKey]) ? PRODUCTS[productKey] : null;
+    var cart = loadCart();
+
+    if (!product) {
+      // 商品未指定でアクセス: カートがあればカート決済画面、無ければ商品一覧への案内
+      document.getElementById('orderForm').style.display = 'none';
+      document.getElementById('productSection').style.display = 'none';
+
+      if (cart.length > 0) {
+        document.getElementById('orderIntro').textContent = 'カートの中身をご確認のうえ、配送先をご入力ください。入力後、クレジットカード決済ページ(Square)にお進みいただきます。';
+        document.getElementById('cartSection').style.display = 'block';
+        renderCartList('cartList', cart);
+        document.getElementById('cartOnlyActions').style.display = 'block';
+
+        var hasEngravedInCart = cart.some(function (item) {
+          var p = PRODUCTS[item.product];
+          return p && p.engraved && item.stamps && item.stamps.length;
+        });
+        var sameRow = document.getElementById('cartOnlySameAsFirstRow');
+        var sameCheckbox = document.getElementById('cartOnlySameAsFirst');
+        var shipFields = document.getElementById('cartOnlyShipFields');
+        function toggleCartOnlyShip() {
+          var same = sameCheckbox.checked;
+          shipFields.style.display = same ? 'none' : 'block';
+          ['cartOnly_ship_name', 'cartOnly_ship_tel', 'cartOnly_ship_zip', 'cartOnly_ship_address'].forEach(function (id) {
+            document.getElementById(id).required = !same;
+          });
+        }
+        if (hasEngravedInCart) {
+          sameRow.style.display = 'flex';
+          sameCheckbox.checked = true;
+        } else {
+          sameRow.style.display = 'none';
+          sameCheckbox.checked = false;
+          shipFields.style.display = 'block';
+          ['cartOnly_ship_name', 'cartOnly_ship_tel', 'cartOnly_ship_zip', 'cartOnly_ship_address'].forEach(function (id) {
+            document.getElementById(id).required = true;
+          });
+        }
+        sameCheckbox.addEventListener('change', toggleCartOnlyShip);
+        toggleCartOnlyShip();
+
+        renderPriceLines('cartOnlyPriceLines', 'cartOnlyTotalDisplay', cart, null);
+
+        document.addEventListener('click', function (e) {
+          var removeBtn = e.target.closest('.cart-line-remove');
+          if (removeBtn && removeBtn.getAttribute('data-cart-list') === 'cartList') {
+            var idx = parseInt(removeBtn.getAttribute('data-cart-index'), 10);
+            cart.splice(idx, 1);
+            saveCart(cart);
+            location.reload();
+          }
+        });
+
+        document.addEventListener('click', function (e) {
+          var btn = e.target.closest('.zip-btn');
+          if (!btn) return;
+          handleZipSearch(btn.getAttribute('data-zip-target'), btn.getAttribute('data-address-target'));
+        });
+
+        document.getElementById('cartOnlySubmitBtn').addEventListener('click', function () {
+          hideError('cartOnlyError');
+          var same = sameCheckbox.checked;
+          var shipping = null;
+          if (same) {
+            // 何もしない(GAS側でカート内の最初の印字内容から自動決定)
+          } else {
+            var name = document.getElementById('cartOnly_ship_name').value.trim();
+            var tel = document.getElementById('cartOnly_ship_tel').value.trim();
+            var zip = document.getElementById('cartOnly_ship_zip').value.trim();
+            var address = document.getElementById('cartOnly_ship_address').value.trim();
+            if (!name || !tel || !zip || !address) {
+              showError('cartOnlyError', '配送先の入力に不足があります。');
+              return;
+            }
+            shipping = { name: name, tel: tel, zip: zip, address: address };
+          }
+          submitOrder(cart, same, shipping, 'cartOnlySubmitBtn', 'cartOnlyError', 'この内容で決済に進む');
+        });
+      } else {
+        document.getElementById('emptyState').style.display = 'block';
       }
+      return;
     }
 
-    // 本数の変更 → 印字内容の入力欄を増減 + 合計金額を再計算
+    // ---- ここから: 商品が指定されている通常フロー ----
+    document.getElementById('selectedProductImg').src = product.image;
+    document.getElementById('selectedProductImg').alt = product.name;
+    document.getElementById('selectedProductName').textContent = product.name;
+    document.getElementById('selectedProductPrice').textContent = '¥' + product.price.toLocaleString() + '(税込)';
+
+    if (cart.length > 0) {
+      document.getElementById('cartSection').style.display = 'block';
+      renderCartList('cartList', cart);
+    }
+
+    if (!product.engraved) {
+      document.getElementById('stampSection').style.display = 'none';
+      document.getElementById('qtyNote').textContent = '本数を変更すると、下の合計金額が自動で再計算されます。';
+    }
+
+    // 配送先セクション: このカート内(既存カート+今の商品)に刻印つき商品が1つでもあれば
+    // 「1本目と同じ」チェックボックスを出す。無ければ(補充インクのみ等)常に配送先を入力してもらう。
+    function hasAnyEngraved() {
+      if (product.engraved) return true;
+      return cart.some(function (item) {
+        var p = PRODUCTS[item.product];
+        return p && p.engraved;
+      });
+    }
+    function toggleShipFields() {
+      var same = document.getElementById('sameAsFirst').checked;
+      document.getElementById('shipFields').style.display = same ? 'none' : 'block';
+      ['ship_name', 'ship_tel', 'ship_zip', 'ship_address'].forEach(function (id) {
+        document.getElementById(id).required = !same;
+      });
+    }
+    if (!hasAnyEngraved()) {
+      document.getElementById('sameAsFirstRow').style.display = 'none';
+      document.getElementById('sameAsFirst').checked = false;
+      document.getElementById('shipFields').style.display = 'block';
+      ['ship_name', 'ship_tel', 'ship_zip', 'ship_address'].forEach(function (id) {
+        document.getElementById(id).required = true;
+      });
+    } else {
+      document.getElementById('sameAsFirst').checked = true;
+      toggleShipFields();
+    }
+
+    function updatePrice() {
+      var qtyInput = document.getElementById('quantity');
+      var qty = parseInt(qtyInput.value, 10);
+      if (!qty || qty < 1) qty = 1;
+      renderPriceLines('priceLines', 'totalDisplay', cart, { product: productKey, quantity: qty });
+    }
+
+    if (product.engraved) generateStampBlocks(1);
+    updatePrice();
+
     document.getElementById('quantity').addEventListener('input', function () {
       var v = parseInt(this.value, 10);
       if (!v || v < 1) v = 1;
       if (v > MAX_QUANTITY) v = MAX_QUANTITY;
-      generateStampBlocks(v);
+      if (product.engraved) generateStampBlocks(v);
       updatePrice();
     });
     document.getElementById('quantity').addEventListener('change', function () {
@@ -414,30 +667,67 @@
       if (!v || v < 1) v = 1;
       if (v > MAX_QUANTITY) v = MAX_QUANTITY;
       this.value = v;
-      generateStampBlocks(v);
+      if (product.engraved) generateStampBlocks(v);
       updatePrice();
     });
 
-    // カラー選択の変更
-    document.querySelectorAll('input[name="color"]').forEach(function (radio) {
-      radio.addEventListener('change', function () {
-        highlightSelectedColor();
-        updatePrice();
-      });
-    });
-
-    // 配送先「1本目と同じ」チェックボックス
     document.getElementById('sameAsFirst').addEventListener('change', toggleShipFields);
 
-    // 郵便番号検索ボタン(動的に増える1本目以降の分もまとめて拾うイベント委任)
     document.addEventListener('click', function (e) {
       var btn = e.target.closest('.zip-btn');
       if (!btn) return;
       handleZipSearch(btn.getAttribute('data-zip-target'), btn.getAttribute('data-address-target'));
     });
 
-    // 送信
-    document.getElementById('orderForm').addEventListener('submit', handleSubmit);
+    document.addEventListener('click', function (e) {
+      var removeBtn = e.target.closest('.cart-line-remove');
+      if (removeBtn && removeBtn.getAttribute('data-cart-list') === 'cartList') {
+        // 配送先セクションの表示切替(hasAnyEngraved)が商品構成に依存するため、
+        // 削除後は状態をシンプルに保つためページを再読み込みして再判定する
+        var idx = parseInt(removeBtn.getAttribute('data-cart-index'), 10);
+        cart.splice(idx, 1);
+        saveCart(cart);
+        location.reload();
+      }
+    });
+
+    // 「カートに追加して他の色も選ぶ」
+    document.getElementById('addToCartBtn').addEventListener('click', function () {
+      var err = validateCurrentForm(productKey);
+      if (err) { showError('orderError', err); return; }
+      var item = readCurrentFormItem(productKey);
+      cart.push(item);
+      saveCart(cart);
+      window.location.href = 'index.html#products';
+    });
+
+    // 「この内容で決済に進む」(このフォームの商品も含めて全部まとめて決済)
+    document.getElementById('orderForm').addEventListener('submit', function (evt) {
+      evt.preventDefault();
+      var err = validateCurrentForm(productKey);
+      if (err) { showError('orderError', err); return; }
+
+      var currentItem = readCurrentFormItem(productKey);
+      var same = document.getElementById('sameAsFirst').checked;
+      var shipping = null;
+      if (!hasAnyEngraved() || !same) {
+        var name = document.getElementById('ship_name').value.trim();
+        var tel = document.getElementById('ship_tel').value.trim();
+        var zip = document.getElementById('ship_zip').value.trim();
+        var address = document.getElementById('ship_address').value.trim();
+        if (!hasAnyEngraved() || !same) {
+          if (!name || !tel || !zip || !address) {
+            showError('orderError', '配送先の入力に不足があります。');
+            return;
+          }
+          shipping = { name: name, tel: tel, zip: zip, address: address };
+        }
+      }
+      var same2 = hasAnyEngraved() ? same : false;
+
+      var items = cart.concat([currentItem]);
+      submitOrder(items, same2, shipping, 'submitBtn', 'orderError', 'この内容で決済に進む');
+    });
   });
 </script>
 

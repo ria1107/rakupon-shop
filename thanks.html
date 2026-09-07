@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ご購入ありがとうございます | らくぽん</title>
+<meta name="robots" content="noindex">
+
+<!-- ============================================================
+     Google Analytics 4 (GA4) 計測タグ
+     TODO: GA4プロパティ作成後、下記の G-49DW82TN3H を
+           実際の測定IDに差し替える。
+     ============================================================ -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-49DW82TN3H"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-49DW82TN3H');
+
+  /*
+    複数商品(色)をまとめてカート購入した場合の決済完了コンバージョン計測。
+    合計金額はGAS側が決済リンク発行時にredirect_urlへ ?total=◯◯ の形で
+    付与しているので、それを読み取ってGA4イベントのvalueに使う。
+  */
+  var params = new URLSearchParams(window.location.search);
+  var totalParam = parseInt(params.get('total'), 10);
+  gtag('event', 'purchase_complete', {
+    item_name: 'cart',
+    value: isNaN(totalParam) ? undefined : totalParam,
+    currency: 'JPY'
+  });
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600;700&amp;family=Noto+Sans+JP:wght@400;500;700&amp;family=Zen+Maru+Gothic:wght@500;700;900&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container header-inner">
+    <a href="index.html" class="logo">らくぽん <span class="logo-sub">by F3</span></a>
+    <nav class="site-nav">
+      <a href="index.html#products">商品</a>
+      <a href="index.html#howto">使い方</a>
+      <a href="index.html#faq">よくある質問</a>
+    </nav>
+  </div>
+</header>
+
+<main class="simple-page">
+  <div class="container thanks-hero">
+    <span class="eyebrow">THANK YOU</span>
+    <h1>ご購入ありがとうございます</h1>
+    <p>
+      ご注文いただき、誠にありがとうございます。<br>
+      ご注文内容の確認メールは、Squareより購入時にご入力いただいたメールアドレス宛に送信されます。<br>
+      発送準備が整い次第、順次発送いたします。今しばらくお待ちくださいませ。
+    </p>
+    <a href="index.html" class="btn btn-primary">トップページに戻る</a>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="container footer-inner">
+    <div class="footer-brand">らくぽん</div>
+    <nav class="footer-links">
+      <a href="tokushoho.html">特定商取引法に基づく表記</a>
+      <a href="privacy.html">プライバシーポリシー</a>
+    </nav>
+    <p class="footer-copy">&copy; 2026 F3株式会社 All Rights Reserved.</p>
+  </div>
+</footer>
+
+</body>
+</html>

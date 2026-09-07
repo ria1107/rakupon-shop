@@ -34,6 +34,7 @@
       <a href="#howto">使い方</a>
       <a href="#features">こだわり</a>
       <a href="#faq">よくある質問</a>
+      <a href="order.html" id="cartNavLink" class="cart-nav-link" style="display:none;">🛒 カート(<span id="cartNavCount">0</span>)</a>
     </nav>
   </div>
 </header>
@@ -167,8 +168,8 @@
               <span class="product-price-tax">(税込)</span>
             </div>
             <span class="product-shipping">送料 全国一律&yen;500(税込)別途</span>
-            <!-- Square決済リンク(補充インク用。2026-08-23発行) -->
-            <a href="https://square.link/u/tccNEu6Y"
+            <!-- 注文フォーム(order.html)へ遷移。配送先入力後にSquare決済へ進む(2026-09-07変更) -->
+            <a href="order.html?product=ink"
                class="btn btn-primary buy-button"
                data-product="ink"
                data-price="385"
