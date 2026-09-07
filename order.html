@@ -132,6 +132,17 @@
       </section>
 
       <!-- ============================================================
+           ⑤ 備考欄(任意。印面内容と送り先が違う場合の補足等に使う)
+           ============================================================ -->
+      <section class="order-section" id="notesSection">
+        <h2>5. 備考欄</h2>
+        <div class="form-group">
+          <label>ご要望・補足事項(任意)</label>
+          <textarea id="orderNotes" name="orderNotes" rows="3" placeholder="印面に入れる内容と送り先が違う場合など、その他ご要望があればご記入ください"></textarea>
+        </div>
+      </section>
+
+      <!-- ============================================================
            合計金額 + 送信
            ============================================================ -->
       <div class="price-summary">
@@ -152,7 +163,8 @@
         <button type="button" id="addToCartBtn" class="btn btn-outline order-addcart-btn">カートに追加して他の色も選ぶ</button>
         <button type="submit" id="submitBtn" class="btn btn-primary order-submit-btn">この内容で決済に進む</button>
       </div>
-      <p class="section-note" style="text-align:center; margin-top:12px;">
+      <p class="section-note order-cancel-note" style="text-align:center; margin-top:12px;">
+        ご注文はお客様ごとの刻印内容で製作するため、<strong>ご注文後のキャンセルはお受けできません</strong>。入力内容をよくご確認のうえお進みください。<br>
         「決済に進む」を押すと、クレジットカード決済ページ(Square)に移動します。
       </p>
     </form>
@@ -189,6 +201,14 @@
         </div>
       </section>
 
+      <section class="order-section" id="cartOnlyNotesSection">
+        <h2>備考欄</h2>
+        <div class="form-group">
+          <label>ご要望・補足事項(任意)</label>
+          <textarea id="cartOnlyNotes" rows="3" placeholder="印面に入れる内容と送り先が違う場合など、その他ご要望があればご記入ください"></textarea>
+        </div>
+      </section>
+
       <div class="price-summary">
         <div id="cartOnlyPriceLines"></div>
         <div class="price-row">
@@ -204,6 +224,9 @@
       <div id="cartOnlyError" class="order-error" role="alert"></div>
 
       <button type="button" id="cartOnlySubmitBtn" class="btn btn-primary order-submit-btn">この内容で決済に進む</button>
+      <p class="section-note order-cancel-note" style="text-align:center; margin-top:12px;">
+        ご注文はお客様ごとの刻印内容で製作するため、<strong>ご注文後のキャンセルはお受けできません</strong>。入力内容をよくご確認のうえお進みください。
+      </p>
     </div>
 
     <!-- 商品未選択・カートも空のときの案内 -->
@@ -479,9 +502,9 @@
   // --------------------------------------------------------------------
   // GASへ送信し、決済ページへリダイレクトする共通処理
   // --------------------------------------------------------------------
-  function submitOrder(items, sameAsFirst, shipping, btnId, errBoxId, btnLabel) {
+  function submitOrder(items, sameAsFirst, shipping, notes, btnId, errBoxId, btnLabel) {
     hideError(errBoxId);
-    var payload = { items: items, sameAsFirst: sameAsFirst, shipping: shipping };
+    var payload = { items: items, sameAsFirst: sameAsFirst, shipping: shipping, notes: notes || '' };
 
     setSubmitting(btnId, true, btnLabel);
 
@@ -593,7 +616,8 @@
             }
             shipping = { name: name, tel: tel, zip: zip, address: address };
           }
-          submitOrder(cart, same, shipping, 'cartOnlySubmitBtn', 'cartOnlyError', 'この内容で決済に進む');
+          var notes = document.getElementById('cartOnlyNotes').value.trim();
+          submitOrder(cart, same, shipping, notes, 'cartOnlySubmitBtn', 'cartOnlyError', 'この内容で決済に進む');
         });
       } else {
         document.getElementById('emptyState').style.display = 'block';
@@ -726,7 +750,8 @@
       var same2 = hasAnyEngraved() ? same : false;
 
       var items = cart.concat([currentItem]);
-      submitOrder(items, same2, shipping, 'submitBtn', 'orderError', 'この内容で決済に進む');
+      var notes = document.getElementById('orderNotes').value.trim();
+      submitOrder(items, same2, shipping, notes, 'submitBtn', 'orderError', 'この内容で決済に進む');
     });
   });
 </script>

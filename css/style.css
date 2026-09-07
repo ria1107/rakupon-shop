@@ -637,7 +637,8 @@ section {
 }
 
 .footer-brand {
-  font-family: var(--font-serif);
+  font-family: var(--font-maru);
+  font-weight: 700;
   font-size: var(--fs-20);
   color: var(--color-white);
 }
@@ -976,7 +977,8 @@ section {
 .form-group input[type="text"],
 .form-group input[type="tel"],
 .form-group input[type="number"],
-.form-group input[type="email"] {
+.form-group input[type="email"],
+.form-group textarea {
   width: 100%;
   padding: 12px;
   border: 1px solid var(--color-border);
@@ -988,9 +990,18 @@ section {
   box-sizing: border-box;
 }
 
-.form-group input:focus {
+.form-group textarea {
+  resize: vertical;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
   outline: none;
   border-color: var(--color-gold);
+}
+
+.order-cancel-note strong {
+  color: #a34a2f;
 }
 
 .required-badge {
