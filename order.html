@@ -353,6 +353,10 @@
           '<div class="form-group">' +
             '<label>住所 <span class="required-badge">必須</span></label>' +
             '<input type="text" name="stamp' + i + '_address" id="stamp' + i + '_address" placeholder="例:東京都千代田区〇〇1-2-3 〇〇ビル4F" required>' +
+          '</div>' +
+          '<div class="form-group">' +
+            '<label>生年月日 <span class="required-badge">必須</span></label>' +
+            '<input type="date" name="stamp' + i + '_birthday" id="stamp' + i + '_birthday" required>' +
           '</div>';
         container.appendChild(block);
       }
@@ -402,7 +406,8 @@
           name: (document.getElementById('stamp' + i + '_name') || {}).value || '',
           tel: (document.getElementById('stamp' + i + '_tel') || {}).value || '',
           zip: (document.getElementById('stamp' + i + '_zip') || {}).value || '',
-          address: (document.getElementById('stamp' + i + '_address') || {}).value || ''
+          address: (document.getElementById('stamp' + i + '_address') || {}).value || '',
+          birthday: (document.getElementById('stamp' + i + '_birthday') || {}).value || ''
         });
       }
     }
@@ -422,7 +427,8 @@
         var tel = (document.getElementById('stamp' + i + '_tel') || {}).value || '';
         var zip = (document.getElementById('stamp' + i + '_zip') || {}).value || '';
         var address = (document.getElementById('stamp' + i + '_address') || {}).value || '';
-        if (!name.trim() || !tel.trim() || !zip.trim() || !address.trim()) {
+        var birthday = (document.getElementById('stamp' + i + '_birthday') || {}).value || '';
+        if (!name.trim() || !tel.trim() || !zip.trim() || !address.trim() || !birthday.trim()) {
           return (i + '本目の印字内容に未入力の項目があります。');
         }
       }
