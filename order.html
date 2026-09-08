@@ -73,6 +73,10 @@
           </div>
         </div>
         <p class="section-note"><a href="index.html#products">他の商品を選び直す</a></p>
+        <label class="checkbox-row add-ink-row" id="addInkRow" style="display:none;">
+          <input type="checkbox" id="addInk">
+          専用補充インクも追加する(+&yen;385 税込)
+        </label>
       </section>
 
       <!-- ============================================================
@@ -437,44 +441,43 @@
   }
 
   // --------------------------------------------------------------------
-  // カート内容の一覧表示(削除リンクつき)
+  // カート内容の一覧表示(編集リンク・削除ボタンつき)
+  // skipIndex: 現在フォームで編集中の商品があれば、そのcart配列上のインデックスを
+  // 渡す(その行だけ一覧から隠す。フォーム側に表示中のため二重表示を避ける)。
+  // data-cart-index / 編集リンクのeditIndexは常にcart配列本来のインデックスを使う
+  // (表示を間引いても採番はズラさない。ズラすと削除・編集が別の商品を操作してしまう)。
   // --------------------------------------------------------------------
-  function renderCartList(containerId, cart) {
+  function renderCartList(containerId, cart, skipIndex) {
     var container = document.getElementById(containerId);
-    if (!cart.length) {
-      container.innerHTML = '';
-      return;
-    }
-    container.innerHTML = cart.map(function (item, index) {
+    var rows = [];
+    cart.forEach(function (item, index) {
+      if (skipIndex !== undefined && skipIndex !== null && index === skipIndex) return;
       var product = PRODUCTS[item.product];
       var name = product ? product.name : item.product;
       var price = product ? product.price : 0;
       var subtotal = price * item.quantity;
-      return '<div class="cart-line">' +
+      rows.push('<div class="cart-line">' +
         '<span class="cart-line-name">' + name + ' &times; ' + item.quantity + '本</span>' +
         '<span class="cart-line-price">&yen;' + subtotal.toLocaleString() + '</span>' +
+        '<a class="cart-line-edit" href="order.html?product=' + encodeURIComponent(item.product) + '&editIndex=' + index + '">編集</a>' +
         '<button type="button" class="cart-line-remove" data-cart-index="' + index + '" data-cart-list="' + containerId + '">削除</button>' +
-        '</div>';
-    }).join('');
+        '</div>');
+    });
+    container.innerHTML = rows.join('');
   }
 
-  // 現在のカート+(あれば)フォーム入力中の商品をあわせた合計金額の内訳行を作る
-  function renderPriceLines(containerId, totalId, cart, currentItem) {
-    var lines = cart.map(function (item) {
+  // カート(表示用。編集中の商品は呼び出し側で除外済み)+ フォーム入力中の商品(複数可。
+  // 現在選択中の商品と、補充インクの追加チェックがあればそれも含む)をあわせた
+  // 合計金額の内訳行を作る
+  function renderPriceLines(containerId, totalId, cart, extraItems) {
+    var allItems = cart.concat(extraItems || []);
+    var lines = allItems.map(function (item) {
       var product = PRODUCTS[item.product];
       var price = product ? product.price : 0;
       var subtotal = price * item.quantity;
       return { label: (product ? product.name : item.product) + '(&yen;' + price.toLocaleString() + ' &times; ' + item.quantity + '本)', amount: subtotal };
     });
     var grandTotal = lines.reduce(function (sum, l) { return sum + l.amount; }, 0);
-
-    if (currentItem) {
-      var cp = PRODUCTS[currentItem.product];
-      var cprice = cp ? cp.price : 0;
-      var csub = cprice * currentItem.quantity;
-      lines.push({ label: (cp ? cp.name : currentItem.product) + '(&yen;' + cprice.toLocaleString() + ' &times; ' + currentItem.quantity + '本)', amount: csub });
-      grandTotal += csub;
-    }
 
     var linesEl = document.getElementById(containerId);
     linesEl.innerHTML = lines.map(function (l) {
@@ -632,14 +635,49 @@
     }
 
     // ---- ここから: 商品が指定されている通常フロー ----
+
+    // カート内の商品を編集する場合、order.html?product=<商品>&editIndex=<カート配列上の番号>
+    // でこのページに来る(renderCartListの「編集」リンク)。該当商品が実在すれば
+    // その内容をこのフォームに読み込み、カート一覧からはその1件だけを隠す
+    // (フォーム側に表示されるため、一覧との二重表示を避ける)。
+    var editIndexParam = params.get('editIndex');
+    var editIndex = null;
+    if (editIndexParam !== null) {
+      var parsedIdx = parseInt(editIndexParam, 10);
+      if (!isNaN(parsedIdx) && parsedIdx >= 0 && parsedIdx < cart.length &&
+          cart[parsedIdx] && cart[parsedIdx].product === productKey) {
+        editIndex = parsedIdx;
+      }
+    }
+    var editingItem = editIndex !== null ? cart[editIndex] : null;
+    // 編集中の1件を除いた「その他のカートの中身」。合計金額計算・決済送信時の
+    // ベースに使う(削除・編集リンクの採番はcart本来のインデックスのまま変えない)。
+    var otherCartItems = editIndex !== null
+      ? cart.filter(function (item, i) { return i !== editIndex; })
+      : cart;
+
     document.getElementById('selectedProductImg').src = product.image;
     document.getElementById('selectedProductImg').alt = product.name;
     document.getElementById('selectedProductName').textContent = product.name;
     document.getElementById('selectedProductPrice').textContent = '¥' + product.price.toLocaleString() + '(税込)';
 
+    if (editingItem) {
+      document.getElementById('productSectionTitle').textContent = '1. ご購入商品(内容を編集中)';
+      document.getElementById('addToCartBtn').textContent = 'この内容でカートを更新する';
+    }
+
     if (cart.length > 0) {
-      document.getElementById('cartSection').style.display = 'block';
-      renderCartList('cartList', cart);
+      document.getElementById('cartSection').style.display = otherCartItems.length > 0 ? 'block' : 'none';
+      renderCartList('cartList', cart, editIndex);
+    }
+
+    // 専用補充インクの追加購入チェック(補充インク自体を選んでいる場合は出さない)
+    if (productKey !== 'ink') {
+      document.getElementById('addInkRow').style.display = 'flex';
+    }
+    function getInkExtra() {
+      var cb = document.getElementById('addInk');
+      return (cb && cb.checked) ? { product: 'ink', quantity: 1, stamps: [] } : null;
     }
 
     if (!product.engraved) {
@@ -647,11 +685,11 @@
       document.getElementById('qtyNote').textContent = '本数を変更すると、下の合計金額が自動で再計算されます。';
     }
 
-    // 配送先セクション: このカート内(既存カート+今の商品)に刻印つき商品が1つでもあれば
+    // 配送先セクション: このカート内(その他のカート+今の商品)に刻印つき商品が1つでもあれば
     // 「1本目と同じ」チェックボックスを出す。無ければ(補充インクのみ等)常に配送先を入力してもらう。
     function hasAnyEngraved() {
       if (product.engraved) return true;
-      return cart.some(function (item) {
+      return otherCartItems.some(function (item) {
         var p = PRODUCTS[item.product];
         return p && p.engraved;
       });
@@ -679,10 +717,27 @@
       var qtyInput = document.getElementById('quantity');
       var qty = parseInt(qtyInput.value, 10);
       if (!qty || qty < 1) qty = 1;
-      renderPriceLines('priceLines', 'totalDisplay', cart, { product: productKey, quantity: qty });
+      var extras = [{ product: productKey, quantity: qty }];
+      var inkExtra = getInkExtra();
+      if (inkExtra) extras.push(inkExtra);
+      renderPriceLines('priceLines', 'totalDisplay', otherCartItems, extras);
     }
 
-    if (product.engraved) generateStampBlocks(1);
+    // 編集中なら本数・印字内容を元のカートの値で復元してからブロックを生成する
+    var initialQty = editingItem ? editingItem.quantity : 1;
+    document.getElementById('quantity').value = initialQty;
+    if (product.engraved) {
+      generateStampBlocks(initialQty);
+      if (editingItem) {
+        editingItem.stamps.forEach(function (s, i) {
+          var n = i + 1;
+          ['name', 'tel', 'zip', 'address', 'birthday'].forEach(function (field) {
+            var el = document.getElementById('stamp' + n + '_' + field);
+            if (el) el.value = s[field] || '';
+          });
+        });
+      }
+    }
     updatePrice();
 
     document.getElementById('quantity').addEventListener('input', function () {
@@ -702,6 +757,8 @@
     });
 
     document.getElementById('sameAsFirst').addEventListener('change', toggleShipFields);
+    var addInkCheckbox = document.getElementById('addInk');
+    if (addInkCheckbox) addInkCheckbox.addEventListener('change', updatePrice);
 
     document.addEventListener('click', function (e) {
       var btn = e.target.closest('.zip-btn');
@@ -721,12 +778,18 @@
       }
     });
 
-    // 「カートに追加して他の色も選ぶ」
+    // 「カートに追加して他の色も選ぶ」(編集中は「この内容でカートを更新する」に表示変更)
     document.getElementById('addToCartBtn').addEventListener('click', function () {
       var err = validateCurrentForm(productKey);
       if (err) { showError('orderError', err); return; }
       var item = readCurrentFormItem(productKey);
-      cart.push(item);
+      if (editIndex !== null) {
+        cart[editIndex] = item; // 編集: 元の位置を上書き(新規追加はしない)
+      } else {
+        cart.push(item);
+      }
+      var inkExtra = getInkExtra();
+      if (inkExtra) cart.push(inkExtra);
       saveCart(cart);
       window.location.href = 'index.html#products';
     });
@@ -755,7 +818,9 @@
       }
       var same2 = hasAnyEngraved() ? same : false;
 
-      var items = cart.concat([currentItem]);
+      var items = otherCartItems.concat([currentItem]);
+      var inkExtra = getInkExtra();
+      if (inkExtra) items.push(inkExtra);
       var notes = document.getElementById('orderNotes').value.trim();
       submitOrder(items, same2, shipping, notes, 'submitBtn', 'orderError', 'この内容で決済に進む');
     });

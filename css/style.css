@@ -882,6 +882,7 @@ section {
 
 .cart-line {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 12px;
   padding: 10px 0;
@@ -917,6 +918,27 @@ section {
 .cart-line-remove:hover {
   border-color: #a34a2f;
   color: #a34a2f;
+}
+
+.cart-line-edit {
+  background: transparent;
+  border: 1px solid var(--color-gold-light);
+  color: var(--color-fairway-dark);
+  font-size: var(--fs-12);
+  padding: 4px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.cart-line-edit:hover {
+  background: rgba(184, 146, 90, 0.15);
+}
+
+/* 補充インクの追加購入チェック行 */
+.add-ink-row {
+  margin-top: 16px;
 }
 
 /* ヘッダーのカートバッジ(order.html) */
