@@ -928,11 +928,23 @@ section {
   font-weight: 700;
 }
 
-/* 注文フォームのボタン行(カートに追加 / 決済に進む) */
+/* 注文フォームのボタン行(カートに追加 / 決済に進む)
+   .btn-outlineは元々ダーク背景(ヒーロー等)向けの白文字設計のため、
+   明るい背景の注文フォーム上では読みにくい。ここだけ濃い文字色に上書きする */
 .order-actions {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.order-addcart-btn {
+  border-color: var(--color-fairway);
+  color: var(--color-fairway-dark);
+}
+
+.order-addcart-btn:hover,
+.order-addcart-btn:focus {
+  background: rgba(27, 58, 43, 0.08);
 }
 
 @media (min-width: 641px) {
