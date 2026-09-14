@@ -92,11 +92,23 @@
       </section>
 
       <!-- ============================================================
-           ③ 印字内容(本数ぶんだけJavaScriptで動的に増減する。
+           ③ メールアドレス(ご注文確認メール・決済ページURLの送付先)
+           ============================================================ -->
+      <section class="order-section" id="emailSection">
+        <h2>3. メールアドレス</h2>
+        <div class="form-group">
+          <label>メールアドレス <span class="required-badge">必須</span></label>
+          <input type="email" id="customerEmail" name="customerEmail" placeholder="例:example@f-3.jp" required>
+        </div>
+        <p class="section-note">ご注文確定後、ご注文内容の確認メールと決済ページのURLをこちらのアドレスにお送りします。</p>
+      </section>
+
+      <!-- ============================================================
+           ④ 印字内容(本数ぶんだけJavaScriptで動的に増減する。
               エングレービング不要の商品(補充インク等)ではこのセクション自体を非表示にする)
            ============================================================ -->
       <section class="order-section" id="stampSection">
-        <h2>3. 印字内容</h2>
+        <h2>4. 印字内容</h2>
         <p class="section-note">スタンプ1本ごとに、刻印するお名前・電話番号・郵便番号・住所をご入力ください。</p>
         <div id="stampBlocks"><!-- ここにJavaScriptが1本目・2本目...の入力欄を生成します --></div>
       </section>
@@ -105,7 +117,7 @@
            ④ 配送先(カート全体で1回だけ入力する)
            ============================================================ -->
       <section class="order-section" id="shipSection">
-        <h2>4. 配送先</h2>
+        <h2>5. 配送先</h2>
         <label class="checkbox-row" id="sameAsFirstRow">
           <input type="checkbox" id="sameAsFirst" checked>
           配送先は1本目の印字内容と同じ
@@ -139,7 +151,7 @@
            ⑤ 備考欄(任意。印面内容と送り先が違う場合の補足等に使う)
            ============================================================ -->
       <section class="order-section" id="notesSection">
-        <h2>5. 備考欄</h2>
+        <h2>6. 備考欄</h2>
         <div class="form-group">
           <label>ご要望・補足事項(任意)</label>
           <textarea id="orderNotes" name="orderNotes" rows="3" placeholder="印面に入れる内容と送り先が違う場合など、その他ご要望があればご記入ください"></textarea>
@@ -175,6 +187,15 @@
 
     <!-- カートのみ表示するとき(商品一覧からカート経由で来たとき)の決済ボタン -->
     <div id="cartOnlyActions" style="display:none;">
+      <section class="order-section" id="cartOnlyEmailSection">
+        <h2>メールアドレス</h2>
+        <div class="form-group">
+          <label>メールアドレス <span class="required-badge">必須</span></label>
+          <input type="email" id="cartOnlyEmail" placeholder="例:example@f-3.jp" required>
+        </div>
+        <p class="section-note">ご注文確定後、ご注文内容の確認メールと決済ページのURLをこちらのアドレスにお送りします。</p>
+      </section>
+
       <section class="order-section" id="cartOnlyShipSection">
         <h2>配送先</h2>
         <label class="checkbox-row" id="cartOnlySameAsFirstRow">
@@ -418,12 +439,21 @@
     return { product: productKey, quantity: qty, stamps: stamps };
   }
 
+  // 簡易的なメールアドレス形式チェック(サーバー側でも改めて検証する)
+  function isValidEmail(value) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  }
+
   // 現在のフォーム(商品セクションが表示されている場合)の入力チェック
   function validateCurrentForm(productKey) {
     var product = PRODUCTS[productKey];
     var qty = parseInt(document.getElementById('quantity').value, 10);
     if (!qty || qty < 1) {
       return '本数を正しく入力してください。';
+    }
+    var email = document.getElementById('customerEmail').value.trim();
+    if (!email || !isValidEmail(email)) {
+      return 'メールアドレスを正しく入力してください。';
     }
     if (product.engraved) {
       for (var i = 1; i <= qty; i++) {
@@ -511,9 +541,9 @@
   // --------------------------------------------------------------------
   // GASへ送信し、決済ページへリダイレクトする共通処理
   // --------------------------------------------------------------------
-  function submitOrder(items, sameAsFirst, shipping, notes, btnId, errBoxId, btnLabel) {
+  function submitOrder(items, sameAsFirst, shipping, notes, email, btnId, errBoxId, btnLabel) {
     hideError(errBoxId);
-    var payload = { items: items, sameAsFirst: sameAsFirst, shipping: shipping, notes: notes || '' };
+    var payload = { items: items, sameAsFirst: sameAsFirst, shipping: shipping, notes: notes || '', email: email || '' };
 
     setSubmitting(btnId, true, btnLabel);
 
@@ -610,6 +640,11 @@
 
         document.getElementById('cartOnlySubmitBtn').addEventListener('click', function () {
           hideError('cartOnlyError');
+          var email = document.getElementById('cartOnlyEmail').value.trim();
+          if (!email || !isValidEmail(email)) {
+            showError('cartOnlyError', 'メールアドレスを正しく入力してください。');
+            return;
+          }
           var same = sameCheckbox.checked;
           var shipping = null;
           if (same) {
@@ -626,7 +661,7 @@
             shipping = { name: name, tel: tel, zip: zip, address: address };
           }
           var notes = document.getElementById('cartOnlyNotes').value.trim();
-          submitOrder(cart, same, shipping, notes, 'cartOnlySubmitBtn', 'cartOnlyError', 'この内容で決済に進む');
+          submitOrder(cart, same, shipping, notes, email, 'cartOnlySubmitBtn', 'cartOnlyError', 'この内容で決済に進む');
         });
       } else {
         document.getElementById('emptyState').style.display = 'block';
@@ -822,7 +857,8 @@
       var inkExtra = getInkExtra();
       if (inkExtra) items.push(inkExtra);
       var notes = document.getElementById('orderNotes').value.trim();
-      submitOrder(items, same2, shipping, notes, 'submitBtn', 'orderError', 'この内容で決済に進む');
+      var email = document.getElementById('customerEmail').value.trim();
+      submitOrder(items, same2, shipping, notes, email, 'submitBtn', 'orderError', 'この内容で決済に進む');
     });
   });
 </script>
